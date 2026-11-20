@@ -48,11 +48,11 @@ def unir_tabla_final(db_path: Path = DB_PATH) -> int:
 
 
 def responder_preguntas(db_path: Path = DB_PATH) -> None:
-    sql_texto = leer_sql("preguntas.sql")
+    sql_texto = leer_sql("consultas.sql")
     consultas = [q.strip() for q in sql_texto.split(";") if q.strip()]
     with duckdb.connect(str(db_path)) as con:
         for idx, query in enumerate(consultas, start=1):
-            print(f"\n--- Pregunta de negocio {idx} ---")
+            print(f"\nPregunta de negocio {idx} ")
             print(con.execute(query).df().to_string(index=False))
 
 
