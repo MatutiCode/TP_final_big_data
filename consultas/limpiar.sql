@@ -1,48 +1,44 @@
-def limpiar_rechazados():
-    con = duckdb.connect(str(DB_PATH))
-    df = con.execute("SELECT * FROM rechazados").df()
-    validos = con.execute("SELECT * FROM validos").df()
+CREATE OR REPLACE TABLE rechazados_limpios AS
+SELECT * FROM (
+    SELECT
+        r.id_reproduccion,
 
-    df = df.drop_duplicates(subset=["id_reproduccion"])
+        COALESCE(
+            TRY_CAST(r.fecha AS DATE),
+            CAST(TRY_STRPTIME(r.fecha, '%d/%m/%Y') AS DATE)
+        ) AS fecha,
+        TRY_CAST(r.id_usuario AS INTEGER) AS id_usuario,
 
-    df["plan"] = df["plan"].str.strip().str.lower()
-    df["tipo_contenido"] = df["tipo_contenido"].str.strip().str.lower()
-    df["dispositivo"] = df["dispositivo"].str.strip().str.lower()
+        LOWER(TRIM(r.plan)) AS plan,
+        TRIM(r.titulo) AS titulo,
 
-    df["dispositivo"] = df["dispositivo"].replace({
-        "tv": "smart_tv",
-        "smarttv": "smart_tv",
-        "smart tv": "smart_tv",
-        "cel": "celular",
-        "movil": "celular",
-        "pc": "notebook",
-        "laptop": "notebook"
-    })
+        COALESCE(LOWER(TRIM(r.tipo_contenido)), t.tipo_ref) AS tipo_contenido,
+        COALESCE(LOWER(TRIM(r.genero)), t.genero_ref) AS genero,
 
-    fecha_iso = pd.to_datetime(df["fecha"], format="%Y-%m-%d", errors="coerce")
-    fecha_arg = pd.to_datetime(df["fecha"], format="%d/%m/%Y", errors="coerce")
-    df["fecha"] = fecha_iso.fillna(fecha_arg)
+        ABS(TRY_CAST(r.minutos_vistos AS INTEGER)) AS minutos_vistos,
 
-    df["id_usuario"] = pd.to_numeric(df["id_usuario"], errors="coerce")
-    df["minutos_vistos"] = pd.to_numeric(df["minutos_vistos"], errors="coerce").abs()
-
-    generos = validos.groupby("titulo")["genero"].first()
-    tipos = validos.groupby("titulo")["tipo_contenido"].first()
-    df["genero"] = df["genero"].fillna(df["titulo"].map(generos))
-    df["tipo_contenido"] = df["tipo_contenido"].fillna(df["titulo"].map(tipos))
-
-    df = df[
-        df["fecha"].notna()
-        & (df["id_usuario"] > 0)
-        & df["plan"].isin(["basico", "estandar", "premium"])
-        & df["tipo_contenido"].isin(["pelicula", "serie", "documental"])
-        & df["genero"].notna()
-        & (df["minutos_vistos"] > 0)
-        & df["dispositivo"].isin(["smart_tv", "celular", "tablet", "notebook"])
-    ]
-
-    df = df.drop(columns=["motivo_rechazo"])
-    con.execute("CREATE OR REPLACE TABLE rechazados_limpios AS SELECT * FROM df")
-
-    print("Rechazados recuperados:", len(df))
-    con.close()
+        CASE
+            WHEN LOWER(TRIM(r.dispositivo)) IN ('tv', 'smarttv', 'smart tv') THEN 'smart_tv'
+            WHEN LOWER(TRIM(r.dispositivo)) IN ('cel', 'movil') THEN 'celular'
+            WHEN LOWER(TRIM(r.dispositivo)) IN ('pc', 'laptop') THEN 'notebook'
+            ELSE LOWER(TRIM(r.dispositivo))
+        END AS dispositivo,
+        TRIM(r.pais) AS pais
+    FROM (SELECT DISTINCT * FROM rechazados) AS r
+    LEFT JOIN (
+        SELECT titulo,
+               MAX(tipo_contenido) AS tipo_ref,
+               MAX(genero) AS genero_ref
+        FROM validos
+        GROUP BY titulo
+    ) AS t
+    ON r.titulo = t.titulo
+)
+WHERE fecha IS NOT NULL
+  AND id_usuario > 0
+  AND plan IN ('basico', 'estandar', 'premium')
+  AND tipo_contenido IN ('pelicula', 'serie', 'documental')
+  AND genero IS NOT NULL
+  AND minutos_vistos > 0
+  AND dispositivo IN ('smart_tv', 'celular', 'tablet', 'notebook')
+  AND pais IS NOT NULL;
