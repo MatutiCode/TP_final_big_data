@@ -1,0 +1,24 @@
+# Informe TP Final de Big Data
+
+## Problemas que tuvimos
+
+* Habia dispositivos escritos de manera diferente
+* Minutos vistos en negativo
+
+## Preguntas de negocio
+
+1.  El género con más minutos vistos es acción (49320), seguido de comedia (44070). Después vienen terror (25453), ciencia ficción (24188), suspenso (21886), naturaleza (21618), tecnología (20502) y romance (19262).
+2.  Los 5 títulos más vistos son Stranger Cosas (268 reproducciones), Comedia Familiar y La Casa de Papel (267 cada uno), Noche de Terror (266) y El Gran Heist (256).
+3.  Hay 433 usuarios distintos en el plan básico, 413 en el estándar y 368 en el premium.
+4.  El dispositivo más usado es smart_tv con 634 reproducciones, aunque tablet está muy cerca con 631.
+5.  El promedio de minutos vistos es 91,77 en películas, 89,81 en documentales y 89,66 en series.
+
+## Rechazados por regla
+
+1. R9_dispositivos_invalidos: 311
+2. R2_fecha_formato: 257
+3. R4_plan_invalido: 202
+4. R7_genero_nulo: 158
+5. R6_tipo_contenido_invalido: 131
+6. R8_minutos_no_positivos: 100
+7. R1_id_duplicado: 75

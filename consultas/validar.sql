@@ -1,3 +1,4 @@
+CREATE OR REPLACE TABLE evaluacion_reglas AS
 WITH base AS (
     SELECT
         *,
