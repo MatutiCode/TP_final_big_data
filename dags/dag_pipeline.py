@@ -1,11 +1,12 @@
 from datetime import datetime
 from pathlib import Path
 import sys
+import pendulum
+
 
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.providers.standard.operators.python import PythonOperator
 
-# Aseguramos que la carpeta raiz del proyecto este en sys.path
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 if str(PROJECT_DIR) not in sys.path:
     sys.path.insert(0, str(PROJECT_DIR))
@@ -21,8 +22,8 @@ from pipeline import (
 with DAG(
     dag_id="etl_streamplus_reproducciones",
     description="Pipeline ETL diario de reproducciones de StreamPlus (Tema 06)",
-    start_date=datetime(2026, 1, 1),
-    schedule="0 2 * * *",  # Todos los dias a las 2:00 AM
+    start_date=pendulum.datetime(2026, 1, 1, tz="America/Argentina/Buenos_Aires"),
+    schedule="0 2 * * *",
     catchup=False,
     tags=["etl", "streamplus", "tema_06"],
 ) as dag:
