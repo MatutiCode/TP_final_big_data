@@ -54,7 +54,7 @@ def unir_tabla_final():
 def responder_preguntas():
     print("Preguntas de negocio")
     con = duckdb.connect(str(DB_PATH))
-    consultas = leer_sql("consultas.sql").split(";")
+    consultas = leer_sql("preguntas.sql").split(";")
     numero = 1
     for consulta in consultas:
         if consulta.strip() != "":
